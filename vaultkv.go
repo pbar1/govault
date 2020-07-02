@@ -45,7 +45,7 @@ func NewDefault() *VaultKV {
 }
 
 // Get retrieves the latest version of the secret at the given path.
-// TODO: v1 is broken,
+// TODO: support getting versions other than latest
 func (v *VaultKV) Get(path string) (map[string]string, error) {
 	var url string
 	if v.V2 {
