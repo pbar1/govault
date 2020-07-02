@@ -1,0 +1,3 @@
+vaultkv
+
+dead simple hashicorp vault key/value api for go
