@@ -1,57 +1,94 @@
 package govault
 
 import (
-	"net/http"
+	"os"
 	"reflect"
-	"sync"
 	"testing"
 )
 
-func TestClient_KVv2Get(t *testing.T) {
+func init() {
+	os.Setenv("VAULT_ADDR", "http://127.0.0.1:8200")
+	os.Setenv("VAULT_TOKEN", "test")
+}
+
+func TestKVv2ClientImpl_Configure(t *testing.T) {
 	type fields struct {
-		lock       *sync.Mutex
-		httpClient *http.Client
-		Address    string
-		Token      string
+		client    *Client
+		MountPath string
 	}
 	type args struct {
-		secretPath string
+		config *KVv2Config
 	}
 	tests := []struct {
 		name    string
 		fields  fields
 		args    args
-		want    *KVv2GetResponse
 		wantErr bool
 	}{
 		{
-			"Test",
-			fields{
-				lock:       &sync.Mutex{},
-				httpClient: &http.Client{},
-				Address:    "http://127.0.0.1:8200",
-				Token:      "test",
+			name: "Test",
+			fields: fields{
+				client:    NewDefaultClient(),
+				MountPath: DefaultKVv2MountPath,
 			},
-			args{secretPath: "secret/data/data/foo"},
-			&KVv2GetResponse{},
-			false,
+			args: args{
+				config: &KVv2Config{
+					MaxVersions: 5,
+					CASRequired: true,
+				}},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := &Client{
-				lock:       tt.fields.lock,
-				httpClient: tt.fields.httpClient,
-				Address:    tt.fields.Address,
-				Token:      tt.fields.Token,
+			k := &kvv2ClientImpl{
+				client:    tt.fields.client,
+				MountPath: tt.fields.MountPath,
 			}
-			got, err := c.KVv2Get(tt.args.secretPath)
+			if err := k.Configure(tt.args.config); (err != nil) != tt.wantErr {
+				t.Errorf("Configure() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestKVv2ClientImpl_ReadConfiguration(t *testing.T) {
+	type fields struct {
+		client    *Client
+		MountPath string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		want    *KVv2Config
+		wantErr bool
+	}{
+		{
+			name: "Test",
+			fields: fields{
+				client:    NewDefaultClient(),
+				MountPath: DefaultKVv2MountPath,
+			},
+			want: &KVv2Config{
+				MaxVersions: 0,
+				CASRequired: false,
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			k := &kvv2ClientImpl{
+				client:    tt.fields.client,
+				MountPath: tt.fields.MountPath,
+			}
+			got, err := k.ReadConfig()
 			if (err != nil) != tt.wantErr {
-				t.Errorf("KVv2Get() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ReadConfig() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("KVv2Get() got = %v, want %v", got, tt.want)
+				t.Errorf("ReadConfig() got = %v, want %v", got, tt.want)
 			}
 		})
 	}

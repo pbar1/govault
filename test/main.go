@@ -1,13 +1,3 @@
-# `govault`
-
-Go client library for the HashiCorp Vault API with zero dependencies.
-Inspired by [HVAC](https://python-hvac.org/).
-
-Work in progress.
-
-### Example
-
-```go
 package main
 
 import "github.com/pbar1/govault"
@@ -22,4 +12,3 @@ func main() {
 	// read specific version of a KV v2 secret on a non-default mount path, ie "/kv/bar"
 	vault.KVv2().SetMountPath("kv").ReadSecretVersion("bar", 3)
 }
-```
