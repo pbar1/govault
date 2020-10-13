@@ -1,9 +1,8 @@
 # `govault`
 
-Go client library for the HashiCorp Vault API with zero dependencies.
-Inspired by [HVAC](https://python-hvac.org/).
+Go client library for HashiCorp Vault. Inspired by [HVAC](https://python-hvac.org/).
 
-Work in progress.
+WIP
 
 ### Example
 

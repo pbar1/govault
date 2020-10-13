@@ -3,6 +3,7 @@ package govault
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"path"
@@ -16,7 +17,7 @@ type (
 		SetMountPath(path string) KVv2Client
 		Configure(options *KVv2Config) error
 		ReadConfig() (*KVv2Config, error)
-		ReadSecretVersion(path string, version int) error
+		ReadSecretVersion(path string, version int) (*KVv2Secret, error)
 		CreateOrUpdateSecret(data map[string]string, options *KVv2CreateOrUpdateSecretOptions) error
 		DeleteLatestSecretVersion(path string) error
 		DeleteSecretVersions(path string, versions []int) error
@@ -37,6 +38,16 @@ type (
 		MaxVersions        int           `json:"max_versions"`
 		CASRequired        bool          `json:"cas_required"`
 		DeleteVersionAfter time.Duration `json:"delete_version_after,omitempty"`
+	}
+
+	KVv2Secret struct {
+		Data     map[string]string `json:"data"`
+		Metadata struct {
+			CreatedTime  time.Time `json:"created_time"`
+			DeletionTime string    `json:"deletion_time"`
+			Destroyed    bool      `json:"destroyed"`
+			Version      int       `json:"version"`
+		} `json:"metadata"`
 	}
 
 	KVv2CreateOrUpdateSecretOptions struct {
@@ -87,8 +98,20 @@ func (k *kvv2ClientImpl) ReadConfig() (*KVv2Config, error) {
 	return v, nil
 }
 
-func (k *kvv2ClientImpl) ReadSecretVersion(path string, version int) error {
-	panic("implement me")
+func (k *kvv2ClientImpl) ReadSecretVersion(path string, version int) (*KVv2Secret, error) {
+	r, err := k.do(http.MethodGet, fmt.Sprintf("data/%s?version=%d", path, version), nil)
+	if err != nil {
+		return nil, err
+	}
+	b, err := json.Marshal(r.Data)
+	if err != nil {
+		return nil, err
+	}
+	v := new(KVv2Secret)
+	if err := json.Unmarshal(b, v); err != nil {
+		return nil, err
+	}
+	return v, nil
 }
 
 func (k *kvv2ClientImpl) CreateOrUpdateSecret(data map[string]string, options *KVv2CreateOrUpdateSecretOptions) error {
