@@ -19,6 +19,6 @@ func main() {
 	vault.KVv2().ReadSecretVersion("foo", 0)
 
 	// read specific version of a KV v2 secret on a non-default mount path, ie "/kv/bar"
-	vault.KVv2().SetMountPath("kv").ReadSecretVersion("bar", 3)
+	vault.KVv2().WithMountPath("kv").ReadSecretVersion("bar", 3)
 }
 ```

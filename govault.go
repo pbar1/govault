@@ -7,18 +7,17 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"sync"
 )
 
 type (
 	Client struct {
-		lock       *sync.Mutex
 		httpClient *http.Client
 		Address    string
 		Token      string
+		Logger     Logger
 	}
 
-	responseContainer struct {
+	vaultResponse struct {
 		RequestID     string      `json:"request_id"`
 		LeaseID       string      `json:"lease_id"`
 		Renewable     bool        `json:"renewable"`
@@ -31,8 +30,8 @@ type (
 )
 
 // NewClient constructs a Vault client.
-func NewClient(httpClient *http.Client, address, token string) *Client {
-	return &Client{&sync.Mutex{}, httpClient, address, token}
+func NewClient(httpClient *http.Client, address, token string, logger Logger) *Client {
+	return &Client{httpClient, address, token, logger}
 }
 
 // NewDefaultClient constructs a Vault client using environment variables VAULT_ADDR
@@ -42,17 +41,23 @@ func NewDefaultClient() *Client {
 	if address == "" {
 		address = "http://127.0.0.1:8200"
 	}
-	return &Client{&sync.Mutex{}, &http.Client{}, address, os.Getenv("VAULT_TOKEN")}
+	return &Client{&http.Client{}, address, os.Getenv("VAULT_TOKEN"), NewStdLogger()}
 }
 
-func (c *Client) doV1(method, endpoint string, reqBody io.Reader) (*responseContainer, error) {
+func (c *Client) doV1(method, endpoint string, params map[string]interface{}, reqBody io.Reader) (*vaultResponse, error) {
 	// build request
-	reqURL := fmt.Sprintf("%s/v1/%s", c.Address, endpoint)
+	reqURL := c.Address + "/v1/" + endpoint
 	req, err := http.NewRequest(method, reqURL, reqBody)
 	if err != nil {
 		return nil, err
 	}
+	if params != nil {
+		for p, q := range params {
+			req.URL.Query().Set(p, fmt.Sprint(q))
+		}
+	}
 	req.Header.Add("X-Vault-Token", c.Token)
+	req.Header.Add("X-Vault-Request", "true")
 
 	// execute request
 	resp, err := c.httpClient.Do(req)
@@ -61,16 +66,33 @@ func (c *Client) doV1(method, endpoint string, reqBody io.Reader) (*responseCont
 	}
 	defer resp.Body.Close()
 
+	// check known status codes
+	if err := checkStatus(resp.StatusCode); err != nil {
+		return nil, err
+	}
+
 	// parse response
 	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
-	v := new(responseContainer)
+	v := new(vaultResponse)
 	if err := json.Unmarshal(respBody, v); err != nil {
 		return nil, err
 	}
-	// TODO: properly handle expected empty response
 
 	return v, nil
+}
+
+// typeConvert takes an object "from" and, using JSON marshal/unmarshal, converts it into the given "to" object pointer.
+// Note: "to" must be a pointer to an object, not the object itself.
+func typeConvert(from, toPtr interface{}) error {
+	b, err := json.Marshal(from)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(b, toPtr); err != nil {
+		return err
+	}
+	return nil
 }
