@@ -12,7 +12,7 @@ func init() {
 	os.Setenv("VAULT_ADDR", "http://127.0.0.1:8200")
 	os.Setenv("VAULT_TOKEN", "test")
 
-	testClient = testClient
+	testClient = NewDefaultClient()
 	testClientLogger := NewStdLogger()
 	testClientLogger.Level = LevelTrace
 	testClient.Logger = testClientLogger

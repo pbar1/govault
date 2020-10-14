@@ -86,7 +86,7 @@ func (k *kvv2Impl) Configure(config *KVv2Config) error {
 	}
 	buf := bytes.NewBuffer(b)
 	_, err = k.do(http.MethodPost, "config", nil, buf)
-	if !errors.Is(err, &ErrSuccessNoData{}) {
+	if err != nil && !errors.Is(err, &ErrSuccessNoData{}) {
 		return err
 	}
 	return nil
