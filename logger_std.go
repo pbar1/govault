@@ -22,52 +22,44 @@ func NewStdLogger() *StdLogger {
 	return &StdLogger{Level: LevelInfo}
 }
 
-func (l *StdLogger) Panic(msg string, items ...interface{}) {
+func (l *StdLogger) Panic(items ...interface{}) {
 	if l.Level <= LevelPanic {
-		items = append(items, "msg", msg)
-		log.Println(items)
-		panic(msg)
+		panic(items)
 	}
 }
 
-func (l *StdLogger) Fatal(msg string, items ...interface{}) {
+func (l *StdLogger) Fatal(items ...interface{}) {
 	if l.Level <= LevelFatal {
-		items = append(items, "msg", msg)
-		log.Fatalln(items)
+		log.Fatalln(items...)
 	}
 }
 
-func (l *StdLogger) Error(msg string, items ...interface{}) {
+func (l *StdLogger) Error(items ...interface{}) {
 	if l.Level <= LevelError {
-		items = append(items, "msg", msg)
-		log.Println(items)
+		log.Println(items...)
 	}
 }
 
-func (l *StdLogger) Warn(msg string, items ...interface{}) {
+func (l *StdLogger) Warn(items ...interface{}) {
 	if l.Level <= LevelWarn {
-		items = append(items, "msg", msg)
-		log.Println(items)
+		log.Println(items...)
 	}
 }
 
-func (l *StdLogger) Info(msg string, items ...interface{}) {
+func (l *StdLogger) Info(items ...interface{}) {
 	if l.Level <= LevelInfo {
-		items = append(items, "msg", msg)
-		log.Println(items)
+		log.Println(items...)
 	}
 }
 
-func (l *StdLogger) Debug(msg string, items ...interface{}) {
+func (l *StdLogger) Debug(items ...interface{}) {
 	if l.Level <= LevelDebug {
-		items = append(items, "msg", msg)
-		log.Println(items)
+		log.Println(items...)
 	}
 }
 
-func (l *StdLogger) Trace(msg string, items ...interface{}) {
+func (l *StdLogger) Trace(items ...interface{}) {
 	if l.Level <= LevelTrace {
-		items = append(items, "msg", msg)
-		log.Println(items)
+		log.Println(items...)
 	}
 }

@@ -1,6 +1,7 @@
 package govault
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -44,8 +45,18 @@ func NewDefaultClient() *Client {
 	return &Client{&http.Client{}, address, os.Getenv("VAULT_TOKEN"), NewStdLogger()}
 }
 
-func (c *Client) doV1(method, endpoint string, params map[string]interface{}, reqBody io.Reader) (*vaultResponse, error) {
-	// build request
+func (c *Client) doV1(method, endpoint string, params map[string]interface{}, body interface{}) (*vaultResponse, error) {
+	// serialize request body
+	var reqBody io.Reader
+	if body != nil {
+		b, err := json.Marshal(body)
+		if err != nil {
+			return nil, err
+		}
+		reqBody = bytes.NewBuffer(b)
+	}
+
+	// build request, add query parameters and headers
 	reqURL := c.Address + "/v1/" + endpoint
 	req, err := http.NewRequest(method, reqURL, reqBody)
 	if err != nil {

@@ -77,8 +77,8 @@ func TestKVv2ClientImpl_ReadConfiguration(t *testing.T) {
 				MountPath: DefaultKVv2MountPath,
 			},
 			want: &KVv2Config{
-				MaxVersions: 0,
-				CASRequired: false,
+				MaxVersions: 5,
+				CASRequired: true,
 			},
 			wantErr: false,
 		},
@@ -199,6 +199,212 @@ func Test_kvv2Impl_CreateOrUpdateSecret(t *testing.T) {
 			}
 			if err := k.CreateOrUpdateSecret(tt.args.path, tt.args.data, tt.args.options); (err != nil) != tt.wantErr {
 				t.Errorf("CreateOrUpdateSecret() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_kvv2Impl_DeleteLatestSecretVersion(t *testing.T) {
+	type fields struct {
+		client    *Client
+		MountPath string
+	}
+	type args struct {
+		path string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Test",
+			fields: fields{
+				client:    testClient,
+				MountPath: DefaultKVv2MountPath,
+			},
+			args: args{
+				path: "foo",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			k := &kvv2Impl{
+				client:    tt.fields.client,
+				MountPath: tt.fields.MountPath,
+			}
+			if err := k.DeleteLatestSecretVersion(tt.args.path); (err != nil) != tt.wantErr {
+				t.Errorf("DeleteLatestSecretVersion() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_kvv2Impl_DeleteSecretVersions(t *testing.T) {
+	type fields struct {
+		client    *Client
+		MountPath string
+	}
+	type args struct {
+		path     string
+		versions []int
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Test",
+			fields: fields{
+				client:    testClient,
+				MountPath: DefaultKVv2MountPath,
+			},
+			args: args{
+				path:     "foo",
+				versions: []int{1, 2, 3, 4},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			k := &kvv2Impl{
+				client:    tt.fields.client,
+				MountPath: tt.fields.MountPath,
+			}
+			if err := k.DeleteSecretVersions(tt.args.path, tt.args.versions); (err != nil) != tt.wantErr {
+				t.Errorf("DeleteSecretVersions() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_kvv2Impl_UndeleteSecretVersions(t *testing.T) {
+	type fields struct {
+		client    *Client
+		MountPath string
+	}
+	type args struct {
+		path     string
+		versions []int
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Test",
+			fields: fields{
+				client:    testClient,
+				MountPath: DefaultKVv2MountPath,
+			},
+			args: args{
+				path:     "foo",
+				versions: []int{1, 2, 3, 4},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			k := &kvv2Impl{
+				client:    tt.fields.client,
+				MountPath: tt.fields.MountPath,
+			}
+			if err := k.UndeleteSecretVersions(tt.args.path, tt.args.versions); (err != nil) != tt.wantErr {
+				t.Errorf("UndeleteSecretVersions() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_kvv2Impl_DestroySecretVersions(t *testing.T) {
+	type fields struct {
+		client    *Client
+		MountPath string
+	}
+	type args struct {
+		path     string
+		versions []int
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Test",
+			fields: fields{
+				client:    testClient,
+				MountPath: DefaultKVv2MountPath,
+			},
+			args: args{
+				path:     "foo",
+				versions: []int{1, 2, 3, 4},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			k := &kvv2Impl{
+				client:    tt.fields.client,
+				MountPath: tt.fields.MountPath,
+			}
+			if err := k.DestroySecretVersions(tt.args.path, tt.args.versions); (err != nil) != tt.wantErr {
+				t.Errorf("DestroySecretVersions() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_kvv2Impl_ListSecrets(t *testing.T) {
+	type fields struct {
+		client    *Client
+		MountPath string
+	}
+	type args struct {
+		path string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    []string
+		wantErr bool
+	}{
+		{
+			"Test",
+			fields{
+				client:    testClient,
+				MountPath: DefaultKVv2MountPath,
+			},
+			args{path: "/"},
+			[]string{"foo"},
+			false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			k := &kvv2Impl{
+				client:    tt.fields.client,
+				MountPath: tt.fields.MountPath,
+			}
+			got, err := k.ListSecrets(tt.args.path)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ListSecrets() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ListSecrets() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
